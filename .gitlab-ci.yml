@@ -39,7 +39,7 @@ deploy_job:
   services:
     - docker:dind
   script:
-    - docker-compose up -d
+    - docker compose up -d
   timeout: 15m
   needs:
     - push_job
