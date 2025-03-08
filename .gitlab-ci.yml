@@ -12,6 +12,10 @@ build_job:
   script:
     - docker build -t node-app:latest .
   timeout: 10m
+  artifacts:
+    paths:
+      - node-app.tar
+    expire_in: 1h
 
 test_job:
   stage: test
@@ -19,6 +23,8 @@ test_job:
   script:
     - echo "Running Tests..."
   timeout: 5m
+  needs:
+    - build_job
 
 push_job:
   stage: push_to_dockerhub
@@ -31,7 +37,7 @@ push_job:
     - docker push "$DOCKERHUB_USER/node-app:latest"
   timeout: 10m
   needs:
-    - build_job
+    - build_job  # Ensure push_job runs AFTER build_job ok?
 
 deploy_job:
   stage: deploy
@@ -39,7 +45,7 @@ deploy_job:
   services:
     - docker:dind
   script:
-    - docker compose up -d
+    - docker-compose up -d
   timeout: 15m
   needs:
     - push_job
