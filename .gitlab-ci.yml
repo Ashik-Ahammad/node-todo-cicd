@@ -6,26 +6,40 @@ stages:
 
 build_job:
   stage: build
+  image: docker:latest
+  services:
+    - docker:dind
   script:
     - docker build -t node-app:latest .
-  
+  timeout: 10m
 
 test_job:
   stage: test
+  image: alpine
   script:
-    - echo "Testing ..."
-  
+    - echo "Running Tests..."
+  timeout: 5m
 
 push_job:
   stage: push_to_dockerhub
+  image: docker:latest
+  services:
+    - docker:dind
   script:
-    - docker login -u "$DOCKERHUB_USER" -p "$DOCKERHUB_PASS"
-    - docker image tag node-app:latest "$DOCKERHUB_USER/node-app:latest"
+    - echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+    - docker tag node-app:latest "$DOCKERHUB_USER/node-app:latest"
     - docker push "$DOCKERHUB_USER/node-app:latest"
-  
+  timeout: 10m
+  needs:
+    - build_job
 
 deploy_job:
   stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
   script:
     - docker-compose up -d
-  
+  timeout: 15m
+  needs:
+    - push_job
